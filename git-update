@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Update the current branch: rebase on the latest of a remote branch.
+# Automatically stashes any changes before updating and applies them after.
+#
+# $1 = remote (defaults to the upstream repo)
+# $2 = branch (defaults to the current branch name)
+
+set -e  # stop on error
+
+
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+
+
+if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
+  remote=${1:-$CONFIG_HUB_REMOTE_UPSTREAM}
+else
+  remote=${1:-${CONFIG_BRANCH_MASTER_REMOTE:-origin}}
+fi
+current=$(git symbolic-ref --short HEAD)
+branch=${2:-$current}
+
+
+stash_count_before=$(git stash list | wc -l)
+git stash save --quiet --include-untracked
+stash_count_after=$(git stash list | wc -l)
+if (( $stash_count_after > $stash_count_before )); then
+  echo
+  echo "> git stash save --quiet --include-untracked"
+  echo "Stashed local changes."
+fi
+
+echo
+echo "Pulling latest commits from $remote/$branch to $current..."
+if [[ $branch == "master" ]]; then
+  echo "> git pull --rebase --prune --tags $remote $branch"
+  git pull --rebase --prune --tags $remote $branch
+else
+  echo "> git pull --rebase $remote $branch"
+  git pull --rebase $remote $branch
+fi
+echo "Done."
+
+if (( $stash_count_after > $stash_count_before )); then
+  git stash pop --quiet
+  echo
+  echo "> git stash pop --quiet"
+  echo "Applied local changes."
+fi

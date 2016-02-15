@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# Prepare the current branch for a pull request: rebase on the latest of a
+# remote branch and autosquash.   Automatically avoids interactive mode unless
+# needed and stashes any changes before updating and applies them after.
+#
+# $1 = remote (defaults to the upstream repo)
+# $2 = branch (defaults to "master")
+
+set -e  # stop on error
+
+
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+
+
+if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
+  remote=${1:-$CONFIG_HUB_REMOTE_UPSTREAM}
+else
+  remote=${1:-${CONFIG_BRANCH_MASTER_REMOTE:-origin}}
+fi
+current=$(git symbolic-ref --short HEAD)
+branch=${2:-master}
+
+
+echo
+echo "Fetching latest commits for $remote..."
+echo "> git fetch $remote"
+git fetch $remote
+echo "Done."
+
+
+all_changes=$(git log --oneline $remote/$branch...$current)
+merge_base=$(git merge-base $remote/$branch $current)
+local_changes=$(git log --oneline $merge_base...$current)
+# When counting lines, skip blanks.
+all_num=$(echo "$all_changes" | sed '/^\s*$/d' | wc -l)
+local_num=$(echo "$local_changes" | sed '/^\s*$/d' | wc -l)
+non_fixup_num=$(echo "$local_changes" | egrep -v ' fixup! ' | sed '/^\s*$/d' | wc -l)
+
+
+echo
+if (( $all_num > 0 )); then
+  echo "Rebasing on $remote/$branch..."
+  if (( $local_num > 0 )); then
+    if (( $non_fixup_num == 1 )); then
+      # Accept commits as-is if there's only one non-fixup.
+      rebase_editor="cat"
+    else
+      # Otherwise, launch editor for review.
+      rebase_editor=""
+    fi
+    echo "> git rebase -i --autosquash --autostash $remote/$branch"
+    rebase_log=$(GIT_SEQUENCE_EDITOR="$rebase_editor" git rebase -i --autosquash --autostash $remote/$branch)
+  else
+    echo "> git rebase --autostash $remote/$branch"
+    rebase_log=$(git rebase --autostash $remote/$branch)
+  fi
+  echo "$rebase_log" | egrep '^# Rebase ' || true
+  echo "Done."
+else
+  echo "Nothing to do."
+fi
+
+echo
+echo "Commits on $current since $remote/$branch:"
+git log --oneline $remote/$branch...$current

@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+#
+# Prints the GitHub user.
+# Finds the value from the following sources in descending order:
+# 1. environment ($GITHUB_USER)
+# 2. ~/.gitconfig (git config --global --get hub.user)
+# 3. ~/.config/hub (github.com -> [0] -> user)
+
+
+require 'yaml'
+
+
+environment_value = ENV['GITHUB_USER']
+if not environment_value.to_s.empty?
+  puts environment_value
+  exit
+end
+
+git_config_value = `git config --global --get hub.user`
+if not git_config_value.to_s.empty?
+  puts git_config_value
+  exit
+end
+
+begin
+  hub_config = YAML.load_file(File.join(Dir.home, '.config', 'hub'))
+  hub_config_value = hub_config['github.com'][0]['user']
+  if not hub_config_value.to_s.empty?
+    puts hub_config_value
+    exit
+  end
+rescue
+end
+
+# Nothing found.
+exit 1

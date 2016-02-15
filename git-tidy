@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# Delete branches merged with a base branch.
+#
+# $1 = base (defaults to "master")
+
+set -e  # stop on error
+
+
+current=$(git symbolic-ref --short HEAD)
+base=${1-master}
+
+merged_branches=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)")
+num=$(echo "$merged_branches" | wc -l)
+if (( $num > 0 )); then
+  echo
+  echo "Deleting branches that have been merged with $base..."
+  echo "$merged_branches" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
+fi

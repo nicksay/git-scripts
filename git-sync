@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Syncs the current branch: rebase on the latest of a remote branch and push
+# to a fork if possible.
+#
+# $1 = remote (defaults to the upstream repo)
+# $2 = branch (defaults to the current branch name)
+
+set -e  # stop on error
+
+
+
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
+CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork)
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+
+
+if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
+  remote=${1:-$CONFIG_HUB_REMOTE_UPSTREAM}
+  fork=$CONFIG_HUB_REMOTE_FORK
+else
+  remote=${1:-${CONFIG_BRANCH_MASTER_REMOTE:-origin}}
+fi
+current=$(git symbolic-ref --short HEAD)
+branch=${2:-$current}
+
+
+git update $remote $branch
+
+if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
+  git export $fork $branch
+elif [[ $branch == "master" ]]; then
+  echo "> git remote prune $remote"
+  git remote prune $remote
+fi

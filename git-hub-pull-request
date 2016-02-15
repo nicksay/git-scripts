@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Create a GitHub pull request: calls `git prepare` and `git export`,
+# followed by `hub pull-request` (if available) or opens a compare URL.
+
+set -e  # stop on error
+
+
+git prepare
+
+git export
+
+
+# If the `hub` command is available, use it to create and open the pull request.
+if which hub > /dev/null; then
+  echo
+  echo "Creating pull request..."
+  echo "> hub pull-request --browse"
+  hub pull-request --browse
+  exit
+fi
+
+
+# Otherwise, construct a compare URL and attempt to open it.
+
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
+CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork)
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+BROWSER_COMMANDS="open xdg-open cygstart x-www-browser google-chrome firefox"
+
+
+if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
+  upstream=$CONFIG_HUB_REMOTE_UPSTREAM
+  fork=$CONFIG_HUB_REMOTE_FORK
+else
+  upstream=${CONFIG_HUB_REMOTE_FORK_BRANCH_MASTER_REMOTE:-origin}
+  fork=$upstream
+fi
+branch=$(git symbolic-ref --short HEAD)
+
+upstream_repo=$(git remote -v | egrep "^$upstream" | head -n 1 |
+                  sed 's/.*github.com.//' | cut -f1 -d.)
+fork_repo=$(git remote -v | egrep "^$fork" | head -n 1 |
+              sed 's/.*github.com.//' | cut -f1 -d/)
+url="https://github.com/$upstream_repo/compare/master...$fork_repo:$branch"
+
+echo
+for $browser in $BROWSER_COMMANDS; do
+  if which $browser > /dev/null; then
+    echo "Opening GitHub compare page..."
+    echo "> $browser $url"
+    $browser "$url"
+    exit
+  fi
+done
+
+echo "Error: Could not automatically open the GitHub compare page."
+echo "Please go to the following URL to create the pull request:"
+echo
+echo "    $url"
