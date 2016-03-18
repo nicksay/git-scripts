@@ -9,9 +9,9 @@
 set -e  # stop on error
 
 
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
-CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork)
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
+CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork || echo "")
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
 
 
 current=$(git symbolic-ref --short HEAD)

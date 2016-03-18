@@ -23,10 +23,10 @@ fi
 
 # Otherwise, construct a compare URL and attempt to open it.
 
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
-CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork)
-CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
+CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork || echo "")
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream || echo "")
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
 BROWSER_COMMANDS="open xdg-open cygstart x-www-browser google-chrome firefox"
 
 

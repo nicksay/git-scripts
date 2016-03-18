@@ -18,13 +18,13 @@
 set -e  # stop on error
 
 
-CONFIG_PUSH_DEFAULT=$(git config --get push.default)
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
-CONFIG_REMOTE_PUSHDEFAULT=$(git config --get remote.pushdefault)
+CONFIG_PUSH_DEFAULT=$(git config --get push.default || echo "")
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
+CONFIG_REMOTE_PUSHDEFAULT=$(git config --get remote.pushdefault || echo "")
 CONFIG_HUB_USER=$(git hub-user)
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
-CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
-CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork)
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream || echo "")
+CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork || echo "")
 HAS_HUB_COMMAND=$(which hub > /dev/null && echo yes || echo no)
 AGAIN_MODE="no"
 

@@ -9,9 +9,9 @@
 set -e  # stop on error
 
 
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type)
-CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream)
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote)
+CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
+CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream || echo "")
+CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
 
 
 if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
