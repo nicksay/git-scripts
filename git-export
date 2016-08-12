@@ -84,10 +84,13 @@ elif [[ $status =~ "new" ]] || [[ $status =~ "push" ]]; then
     git push $remote $current:$branch
   fi
 else
+  if [[ $status =~ "pull" ]]; then
+    echo "Warning: $current is behind $remote/$branch"
+  fi
   if [[ $branch == "master" ]]; then
     echo "Error: aborting attempted force-push to $remote/$branch"
     exit 1
-  elif confirm "Do you want to force-push $current to $remote/$branch?" "yes"; then
+  elif confirm "Do you want to force-push $current to $remote/$branch?"; then
     echo "Pushing $current to $remote/$branch..."
     echo "> git push --force $remote $current:$branch"
     git push --force $remote $current:$branch
