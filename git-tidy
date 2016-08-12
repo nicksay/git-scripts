@@ -1,19 +1,34 @@
 #!/bin/bash
 #
-# Delete branches merged with a base branch.
+# Delete branches merged or squashed with a base branch.
 #
 # $1 = base (defaults to "master")
 
 set -e  # stop on error
 
 
-current=$(git symbolic-ref --short HEAD)
 base=${1-master}
 
-merged_branches=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)")
-num=$(echo "$merged_branches" | wc -l)
+merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)")
+num=$(echo "$merged" | wc -l)
 if (( $num > 0 )); then
   echo
   echo "Deleting branches that have been merged with $base..."
-  echo "$merged_branches" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
+  echo "$merged" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
+fi
+
+squashed=""
+unmerged=$(git branch --no-merged "$base" | egrep -v "(^\* | $base\$)")
+for branch in $unmerged; do
+  branch_changes=$(git log --format=%H "$base..$branch")
+  squashed_changes=$(git log --format=%H --cherry "$base...$branch")
+  if [[ "$branch_changes" == "$squashed_changes" ]]; then
+    squashed="$squashed $branch"
+  fi
+done
+num=$(echo "$squashed" | wc -w)
+if (( $num > 0 )); then
+  echo
+  echo "Deleting branches that have been squashed with $base..."
+  echo "$squashed" | xargs -t git branch -D 2>&1 | sed 's/^git /> git /'
 fi
