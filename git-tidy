@@ -9,7 +9,8 @@ set -e  # stop on error
 
 base=${1-master}
 
-merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)")
+# Note that grep will exit with 1 if no lines match; use cat to avoid errors.
+merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)" | cat)
 num=$(echo "$merged" | wc -l)
 if (( $num > 0 )); then
   echo
@@ -18,7 +19,8 @@ if (( $num > 0 )); then
 fi
 
 squashed=""
-unmerged=$(git branch --no-merged "$base" | egrep -v "(^\* | $base\$)")
+# Note that grep will exit with 1 if no lines match; use cat to avoid errors.
+unmerged=$(git branch --no-merged "$base" | egrep -v "(^\* | $base\$)" | cat)
 for branch in $unmerged; do
   branch_changes=$(git log --format=%H "$base..$branch")
   squashed_changes=$(git log --format=%H --cherry "$base...$branch")
