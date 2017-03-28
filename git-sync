@@ -1,36 +1,29 @@
 #!/bin/bash
 #
-# Syncs the current branch: rebase on the latest of a remote branch and push
-# to a fork if possible.
+# Sync the current branch: pull and rebase from upstream and push to fork
 #
-# $1 = remote (defaults to the upstream repo)
-# $2 = branch (defaults to the current branch name)
+# $1 = upstream (defaults to upstream from `git get-fork-and-upstream`)
+# $2 = fork (defaults to fork from `git get-fork-and-upstream`)
+# $3 = branch (defaults to the current branch)
 
 set -e  # stop on error
 
+SCRIPTS="$(dirname "$0")"
 
-
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
-CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream || echo "")
-CONFIG_HUB_REMOTE_FORK=$(git config --get hub.remote.fork || echo "")
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
-
-
-if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
-  remote=${1:-$CONFIG_HUB_REMOTE_UPSTREAM}
-  fork=$CONFIG_HUB_REMOTE_FORK
-else
-  remote=${1:-${CONFIG_BRANCH_MASTER_REMOTE:-origin}}
-fi
+upstream=${1:-$("$SCRIPTS"/git-get-fork-and-upstream | awk '/upstream:/ { print $2 }')}
+fork=${2:-$("$SCRIPTS"/git-get-fork-and-upstream | awk '/fork:/ { print $2 }')}
 current=$(git symbolic-ref --short HEAD)
-branch=${2:-$current}
+branch=${3:-$current}
 
 
-git update $remote $branch
+echo "Pulling latest commits from $upstream/$branch to $current..."
+echo "> git pull --prune --tags $upstream $branch"
+git pull --prune --tags $upstream $branch
+echo "Done."
 
-if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
-  git export $fork $branch
-elif [[ $branch == "master" ]]; then
-  echo "> git remote prune $remote"
-  git remote prune $remote
+if [[ "$upstream" != "$fork" ]]; then
+  echo "Pushing $current to $fork/$branch..."
+  echo "> git push --prune $fork $current:$branch"
+  git push --prune $fork $current:$branch
+  echo "Done."
 fi

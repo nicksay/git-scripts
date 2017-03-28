@@ -1,48 +1,37 @@
 #!/bin/bash
 #
-# Prepare the current branch for a pull request: rebase on the latest of a
-# remote branch and autosquash.   Automatically avoids interactive mode unless
-# needed and stashes any changes before updating and applies them after.
+# Prepare the current branch for a pull request: pull and rebase from upstream,
+# automatically avoiding interactive mode unless needed.
 #
-# $1 = remote (defaults to the upstream repo)
+# $1 = upstream (defaults to upstream from `git get-fork-and-upstream`)
 # $2 = branch (defaults to "master")
 
 set -e  # stop on error
 
+SCRIPTS="$(dirname "$0")"
 
-CONFIG_HUB_REPO_TYPE=$(git config --get hub.repo.type || echo "")
-CONFIG_HUB_REMOTE_UPSTREAM=$(git config --get hub.remote.upstream || echo "")
-CONFIG_BRANCH_MASTER_REMOTE=$(git config --get branch.master.remote || echo "")
-
-
-if [[ $CONFIG_HUB_REPO_TYPE = "fork" ]]; then
-  remote=${1:-$CONFIG_HUB_REMOTE_UPSTREAM}
-else
-  remote=${1:-${CONFIG_BRANCH_MASTER_REMOTE:-origin}}
-fi
+upstream=${1:-$("$SCRIPTS"/git-get-fork-and-upstream | awk '/upstream:/ { print $2 }')}
 current=$(git symbolic-ref --short HEAD)
 branch=${2:-master}
 
 
 echo
-echo "Fetching latest commits for $remote..."
-echo "> git fetch $remote"
-git fetch $remote
+echo "Fetching latest commits for $upstream..."
+echo "> git fetch $upstream"
+git fetch $upstream
 echo "Done."
 
-
-all_changes=$(git log --oneline $remote/$branch...$current)
-merge_base=$(git merge-base $remote/$branch $current)
+all_changes=$(git log --oneline $upstream/$branch...$current)
+merge_base=$(git merge-base $upstream/$branch $current)
 local_changes=$(git log --oneline $merge_base...$current)
 # When counting lines, skip blanks.
 all_num=$(echo "$all_changes" | sed '/^\s*$/d' | wc -l)
 local_num=$(echo "$local_changes" | sed '/^\s*$/d' | wc -l)
 non_fixup_num=$(echo "$local_changes" | egrep -v ' fixup! ' | sed '/^\s*$/d' | wc -l)
 
-
 echo
 if (( $all_num > 0 )); then
-  echo "Rebasing on $remote/$branch..."
+  echo "Rebasing on $upstream/$branch..."
   if (( $local_num > 0 )); then
     if (( $non_fixup_num == 1 )); then
       # Accept commits as-is if there's only one non-fixup.
@@ -51,11 +40,11 @@ if (( $all_num > 0 )); then
       # Otherwise, launch editor for review.
       rebase_editor=""
     fi
-    echo "> git rebase -i --autosquash --autostash $remote/$branch"
-    rebase_log=$(GIT_SEQUENCE_EDITOR="$rebase_editor" git rebase -i --autosquash --autostash $remote/$branch)
+    echo "> git rebase -i --autosquash $upstream/$branch"
+    rebase_log=$(GIT_SEQUENCE_EDITOR="$rebase_editor" git rebase -i --autosquash $upstream/$branch)
   else
-    echo "> git rebase --autostash $remote/$branch"
-    rebase_log=$(git rebase --autostash $remote/$branch)
+    echo "> git rebase $upstream/$branch"
+    rebase_log=$(git rebase $upstream/$branch)
   fi
   echo "$rebase_log" | egrep '^# Rebase ' || true
   echo "Done."
@@ -64,5 +53,5 @@ else
 fi
 
 echo
-echo "Commits on $current since $remote/$branch:"
-git log --oneline $remote/$branch...$current
+echo "Commits on $current since $upstream/$branch:"
+git log --oneline $upstream/$branch...$current
