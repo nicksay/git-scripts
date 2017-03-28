@@ -3,34 +3,53 @@
 # Prints the GitHub user.
 # Finds the value from the following sources in descending order:
 # 1. environment ($GITHUB_USER)
-# 2. ~/.gitconfig (git config --global --get hub.user)
+# 2. .git/config or ~/.gitconfig (git config --get hub.user)
 # 3. ~/.config/hub (github.com -> [0] -> user)
+# If a value is not found, one is saved to the local .gitconfig.
 
 
 require 'yaml'
 
 
-environment_value = ENV['GITHUB_USER']
-if not environment_value.to_s.empty?
+environment_value = ENV['GITHUB_USER'].to_s.chomp
+if not environment_value.empty?
+  $stderr.puts "Using github.com username \"#{environment_value}\" from: $GITHUB_USER"
   puts environment_value
   exit
 end
 
-git_config_value = `git config --global --get hub.user`
-if not git_config_value.to_s.empty?
+git_config_value = `git config --get hub.user`.to_s.chomp
+if not git_config_value.empty?
+  $stderr.puts "Using github.com username \"#{git_config_value}\" from: git config --get hub.user"
   puts git_config_value
   exit
 end
 
 begin
   hub_config = YAML.load_file(File.join(Dir.home, '.config', 'hub'))
-  hub_config_value = hub_config['github.com'][0]['user']
-  if not hub_config_value.to_s.empty?
+  hub_config_value = hub_config['github.com'][0]['user'].to_s.chomp
+  if not hub_config_value.empty?
+    $stderr.puts "Using github.com username \"#{hub_config_value}\" from: ~/.config/hub"
     puts hub_config_value
     exit
   end
 rescue
 end
 
-# Nothing found.
-exit 1
+$stderr.print "github.com username: "
+username = gets.chomp
+if username.empty?
+  $stderr.puts "Error: github.com username is required"
+  exit 1
+end
+$stderr.puts "Using github.com username: #{username}"
+puts username
+
+$stderr.puts
+$stderr.puts "Saving github.com username locally for this repo..."
+$stderr.puts "> git config hub.user #{username}"
+`git config hub.user #{username}`
+$stderr.puts "Done."
+$stderr.puts "If you want to set the github.com username globally, run the following:"
+$stderr.puts "    git config --global hub.user #{username}"
+$stderr.puts
