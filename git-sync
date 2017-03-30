@@ -2,16 +2,16 @@
 #
 # Sync the current branch: pull and rebase from upstream and push to fork
 #
-# $1 = upstream (defaults to upstream from `git get-fork-and-upstream`)
-# $2 = fork (defaults to fork from `git get-fork-and-upstream`)
+# $1 = upstream (defaults to upstream from `git hub-remotes`)
+# $2 = fork (defaults to fork from `git hub-remotes`)
 # $3 = branch (defaults to the current branch)
 
 set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
-upstream=${1:-$("$SCRIPTS"/git-get-fork-and-upstream | awk '/upstream:/ { print $2 }')}
-fork=${2:-$("$SCRIPTS"/git-get-fork-and-upstream | awk '/fork:/ { print $2 }')}
+upstream=${1:-$("$SCRIPTS"/git-hub-remotes | awk '/upstream:/ { print $2 }')}
+fork=${2:-$("$SCRIPTS"/git-hub-remotes | awk '/fork:/ { print $2 }')}
 current=$(git symbolic-ref --short HEAD)
 branch=${3:-$current}
 
