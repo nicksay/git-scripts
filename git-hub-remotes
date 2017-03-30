@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Prints the (GitHub) fork and upstream remotes.
 
 
 set -e  # stop on error
@@ -46,5 +48,11 @@ else
   fi
 fi
 
-printf "fork:\t$fork\t$fork_url\n"
-printf "upstream:\t$upstream\t$upstream_url\n"
+if [[ "$1" == "--fork" ]]; then
+  printf "$fork\t$fork_url\n"
+elif [[ "$1" == "--upstream" ]]; then
+  printf "$upstream\t$upstream_url\n"
+else
+  printf "fork:        $fork\t$fork_url\n"
+  printf "upstream:    $upstream\t$upstream_url\n"
+fi

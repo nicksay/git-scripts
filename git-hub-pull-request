@@ -7,8 +7,8 @@ set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
-upstream=$("$SCRIPTS"/git-hub-remotes | awk '/upstream:/ { print $2 }')
-fork=$("$SCRIPTS"/git-hub-remotes | awk '/fork:/ { print $2 }')
+upstream=$("$SCRIPTS"/git-hub-remotes --upstream | cut -f1)
+fork=$("$SCRIPTS"/git-hub-remotes --fork | cut -f1)
 current=$(git symbolic-ref --short HEAD)
 
 
@@ -30,8 +30,8 @@ fi
 
 # Otherwise, construct a compare URL and attempt to open it.
 
-upstream_url=$("$SCRIPTS"/git-hub-remotes | awk '/upstream:/ { print $3 }')
-fork_url=$("$SCRIPTS"/git-hub-remotes | awk '/fork:/ { print $3 }')
+upstream_url=$("$SCRIPTS"/git-hub-remotes --upstream | cut -f2)
+fork_url=$("$SCRIPTS"/git-hub-remotes --fork | cut -f2)
 upstream_repo=$(echo "$upstream_url" | sed 's/.*github.com.//' | cut -f1 -d.)
 fork_repo=$(echo $"fork_url" | sed 's/.*github.com.//' | cut -f1 -d/)
 url="https://github.com/$upstream_repo/compare/master...$fork_repo:$branch"
