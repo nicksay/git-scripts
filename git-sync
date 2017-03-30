@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Sync the current branch: pull and rebase from upstream and push to fork
+# Sync the current branch: pull from upstream and push to fork
 #
 # $1 = upstream (defaults to `git hub-remotes --upstream`)
 # $2 = fork (defaults to `git hub-remotes --fork`)
