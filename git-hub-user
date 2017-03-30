@@ -10,31 +10,47 @@
 
 require 'yaml'
 
-
 environment_value = ENV['GITHUB_USER'].to_s.chomp
 if not environment_value.empty?
-  $stderr.puts "Using github.com username \"#{environment_value}\" from: $GITHUB_USER"
+  if ARGV[0] == '--debug'
+    $stderr.puts "Using github.com username \"#{environment_value}\" from: $GITHUB_USER"
+  end
   puts environment_value
   exit
+end
+if ARGV[0] == '--debug'
+  $stderr.puts "No github.com username found in: $GITHUB_USER"
 end
 
 git_config_value = `git config --get hub.user`.to_s.chomp
 if not git_config_value.empty?
-  $stderr.puts "Using github.com username \"#{git_config_value}\" from: git config --get hub.user"
+  if ARGV[0] == '--debug'
+    $stderr.puts "Using github.com username \"#{git_config_value}\" from: git config --get hub.user"
+  end
   puts git_config_value
   exit
 end
+if ARGV[0] == '--debug'
+  $stderr.puts "No github.com username found in: git config --get hub.user"
+end
+
 
 begin
   hub_config = YAML.load_file(File.join(Dir.home, '.config', 'hub'))
   hub_config_value = hub_config['github.com'][0]['user'].to_s.chomp
   if not hub_config_value.empty?
-    $stderr.puts "Using github.com username \"#{hub_config_value}\" from: ~/.config/hub"
+    if ARGV[0] == '--debug'
+      $stderr.puts "Using github.com username \"#{hub_config_value}\" from: ~/.config/hub"
+    end
     puts hub_config_value
     exit
   end
 rescue
 end
+if ARGV[0] == '--debug'
+  $stderr.puts "No github.com username found in: ~/.config/hub"
+end
+
 
 $stderr.print "github.com username: "
 username = gets.chomp
