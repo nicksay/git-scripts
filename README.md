@@ -57,7 +57,7 @@ git done
 
 This will make sure both your local and fork repos are updated with the
 latest changes from upstream and remove branches have been merged or
-squashed with master, including the one you created for your change.
+squashed with main, including the one you created for your change.
 
 ## Documentation
 
@@ -99,7 +99,7 @@ If a value is not found, prompts for one and saves it to .git/config.
 git done
 ```
 
-Finishes a branch: returns to master, runs `git sync` and `git tidy`.
+Finishes a branch: returns to main, runs `git sync` and `git tidy`.
 
 ### `git new`
 
@@ -107,7 +107,7 @@ Finishes a branch: returns to master, runs `git sync` and `git tidy`.
 git new <branch>
 ```
 
-Creates a new branch from master.
+Creates a new branch from main.
 
 Arguments:
 
@@ -124,7 +124,7 @@ Prepare your current branch for a pull request.
 Arguments:
 
 - `upstream`: defaults to `git hub-remotes --upstream`
-- `branch`: defaults to "master"
+- `branch`: defaults to "main"
 
 Fetches the latest commits from `[upstream]` and rebases on
 `[upstream]/[branch]`. Automatically avoids interactive mode unless
@@ -162,7 +162,7 @@ Deletes branches merged or squashed with a base branch.
 
 Arguments:
 
-- `branch`: defaults to "master"
+- `branch`: defaults to "main"
 
 [help on configuring remotes]: https://help.github.com/articles/configuring-a-remote-for-a-fork/
 [gh tool]: https://cli.github.com/

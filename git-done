@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Finish a branch: `git checkout master`, `git sync`, and `git tidy`.
+# Finish a branch: `git checkout main`, `git sync`, and `git tidy`.
 
 set -e  # stop on error
 
 
-git checkout master
+git checkout main
 
 git sync
 

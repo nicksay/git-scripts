@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# Start a new branch: `git checkout master` and `git checkout -b <name>`.
+# Start a new branch: `git checkout main` and `git checkout -b <name>`.
 #
 # $1 = branch
 
 set -e  # stop on error
 
 
-git checkout master
+git checkout main
 
 git checkout -b "$1"

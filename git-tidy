@@ -2,12 +2,12 @@
 #
 # Delete branches merged or squashed with a base branch.
 #
-# $1 = base (defaults to "master")
+# $1 = base (defaults to "main")
 
 set -e  # stop on error
 
 
-base=${1-master}
+base=${1-main}
 
 # Note that grep will exit with 1 if no lines match; use cat to avoid errors.
 merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)" | cat)

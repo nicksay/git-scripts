@@ -9,16 +9,16 @@ set -e  # stop on error
 SCRIPTS="$(dirname "$0")"
 
 
-remote_master_name=$(git config --get branch.master.remote || echo)
-remote_master_url=$(git remote get-url "$remote_master_name" 2>/dev/null || echo)
-if [[ ! "$remote_master_url" ]]; then
-  echo >&2 "Error: no remote found for the master branch"
+remote_main_name=$(git config --get branch.main.remote || echo)
+remote_main_url=$(git remote get-url "$remote_main_name" 2>/dev/null || echo)
+if [[ ! "$remote_main_url" ]]; then
+  echo >&2 "Error: no remote found for the main branch"
   exit 1
 fi
-fork="$remote_master_name"
-fork_url="$remote_master_url"
-upstream="$remote_master_name"
-upstream_url="$remote_master_url"
+fork="$remote_main_name"
+fork_url="$remote_main_url"
+upstream="$remote_main_name"
+upstream_url="$remote_main_url"
 
 
 remote_origin_url=$(git remote get-url "origin" 2>/dev/null || echo)
