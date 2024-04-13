@@ -90,7 +90,8 @@ Finds the value from the following sources in descending order:
 
 1. environment (`$GITHUB_USER`)
 2. .git/config or ~/.gitconfig (`git config --get hub.user`)
-3. ~/.config/hub (`github.com -> [0] -> user`)
+3. ~/.config/gh/hosts.yml (`github.com -> user`)
+4. ~/.config/hub (`github.com -> [0] -> user`)
 
 If a value is not found, prompts for one and saves it to .git/config.
 
