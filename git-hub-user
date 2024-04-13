@@ -34,6 +34,21 @@ if ARGV[0] == '--debug'
   $stderr.puts "No github.com username found in: git config --get hub.user"
 end
 
+begin
+  gh_config = YAML.load_file(File.join(Dir.home, '.config', 'gh', 'hosts.yml'))
+  gh_config_value = gh_config['github.com']['user'].to_s.chomp
+  if not gh_config_value.empty?
+    if ARGV[0] == '--debug'
+      $stderr.puts "Using github.com username \"#{gh_config_value}\" from: ~/.config/gh/hosts.yml"
+    end
+    puts gh_config_value
+    exit
+  end
+rescue
+end
+if ARGV[0] == '--debug'
+  $stderr.puts "No github.com username found in: ~/.config/gh/hosts.yml"
+end
 
 begin
   hub_config = YAML.load_file(File.join(Dir.home, '.config', 'hub'))
