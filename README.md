@@ -5,10 +5,10 @@ A collection of small scripts to make the git workflow easier
 These scripts are intended for making the GitHub workflow easier.
 They support a single "central" repo as well as the common dual
 "upstream/fork" repo setups. In particular, both the setup recommended
-by GitHub's [help on configuring remotes][] (upstream named `upstream`
-and fork named `origin`) and the setup created by the GitHub's
-[hub tool]() (upstream named `origin` and fork named `$GIHUB_USER`) are
-supported.
+by GitHub's [help on configuring remotes][] and used by GitHub's [gh tool][]
+(upstream named `upstream` and fork named `origin`) and the setup created by
+GitHub's [hub tool]() (upstream named `origin` and fork named `$GIHUB_USER`)
+are supported.
 
 Note that nothing prevents using most of these scripts with other
 hosting services like GitLab.
@@ -46,8 +46,8 @@ git hub-pull-request
 
 This will prepare your branch for a pull request by rebasing on the
 latest commits from upstream, push your branch to your fork, and create
-a pull request using the [hub tool][] if it's installed or open the
-GitHub compare URL if not.
+a pull request using the [gh tool][] or [hub tool][] if one's installed or open
+the GitHub compare URL if not.
 
 After your pull request is accepted, you can finish up:
 
