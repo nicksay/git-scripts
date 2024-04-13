@@ -35,13 +35,13 @@ if (( $all_num > 0 )); then
   if (( $local_num > 0 )); then
     if (( $non_fixup_num == 1 )); then
       # Accept commits as-is if there's only one non-fixup.
-      rebase_editor="cat"
+      set_rebase_editor="env GIT_SEQUENCE_EDITOR=cat"
     else
       # Otherwise, launch editor for review.
-      rebase_editor=""
+      set_rebase_editor="env -u GIT_SEQUENCE_EDITOR"
     fi
     echo "> git rebase -i --autosquash $upstream/$branch"
-    rebase_log=$(GIT_SEQUENCE_EDITOR="$rebase_editor" git rebase -i --autosquash $upstream/$branch)
+    rebase_log=$($set_rebase_editor git rebase -i --autosquash $upstream/$branch)
   else
     echo "> git rebase $upstream/$branch"
     rebase_log=$(git rebase $upstream/$branch)
