@@ -4,7 +4,7 @@ A collection of small scripts to make the git workflow easier
 
 These scripts are intended for making the GitHub workflow easier.
 They support a single "central" repo as well as the common dual
-"upstream/fork" repo setups.  In particular, both the setup recommended
+"upstream/fork" repo setups. In particular, both the setup recommended
 by GitHub's [help on configuring remotes][] (upstream named `upstream`
 and fork named `origin`) and the setup created by the GitHub's
 [hub tool]() (upstream named `origin` and fork named `$GIHUB_USER`) are
@@ -12,7 +12,6 @@ supported.
 
 Note that nothing prevents using most of these scripts with other
 hosting services like GitLab.
-
 
 ## Installation
 
@@ -24,9 +23,7 @@ cd git-scripts
 ./install.sh
 ```
 
-This will place the scripts in `$HOME/bin` and add a couple aliases to
-your `git config` if they don't already exist.
-
+This will place the scripts in `$HOME/bin`.
 
 ## Basic Usage
 
@@ -90,6 +87,7 @@ git hub-user
 ```
 
 Finds the value from the following sources in descending order:
+
 1. environment (`$GITHUB_USER`)
 2. .git/config or ~/.gitconfig (`git config --get hub.user`)
 3. ~/.config/hub (`github.com -> [0] -> user`)
@@ -113,6 +111,7 @@ git new <branch>
 Creates a new branch from master.
 
 Arguments:
+
 - `branch`: the name of the new branch to create
 
 ### `git prepare`
@@ -124,6 +123,7 @@ git prepare [upstream] [branch]
 Prepare your current branch for a pull request.
 
 Arguments:
+
 - `upstream`: defaults to `git hub-remotes --upstream`
 - `branch`: defaults to "master"
 
@@ -144,12 +144,13 @@ git sync [upstream] [fork] [branch]
 Keep your local and fork repos synced with upstream.
 
 Arguments:
+
 - `upstream`: defaults to `git hub-remotes --upstream`
 - `fork`: defaults to `git hub-remotes --fork`
 - `branch`: defaults to the current branch
 
 Pulls the latest commits from `[upstream]/[branch]` and then pushes
-to `[fork]/[branch]`.  Uses `pull --prune` and `push --prune` to remove
+to `[fork]/[branch]`. Uses `pull --prune` and `push --prune` to remove
 old branch references.
 
 ### `git tidy`
