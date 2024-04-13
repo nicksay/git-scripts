@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Create a GitHub pull request: calls `git prepare` and `git push`,
-# followed by `hub pull-request` (if available) or opens a compare URL.
+# followed by one of the following: `gh pr create`, `hub pull-request`, or
+# opening a GitHub compare URL.
 
 set -e  # stop on error
 
@@ -17,6 +18,15 @@ git prepare "$upstream"
 git push "$fork"
 
 sleep 1
+
+# If the `gh` command is available, use it to create and open the pull request.
+if which hub > /dev/null; then
+  echo
+  echo "Creating pull request..."
+  echo "> gh pr create --fill --web"
+  gh pr create --fill --web
+  exit
+fi
 
 # If the `hub` command is available, use it to create and open the pull request.
 if which hub > /dev/null; then

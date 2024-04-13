@@ -59,16 +59,14 @@ This will make sure both your local and fork repos are updated with the
 latest changes from upstream and remove branches have been merged or
 squashed with master, including the one you created for your change.
 
-
 ## Documentation
 
 ### `git hub-pull-request`
 
 Create a GitHub pull request.
 
-Calls `git prepare` and `git push` followed by `hub pull-request`
-(if available) or opens a compare URL.
-
+Calls `git prepare` and `git push` followed by one of the following:
+`gh pr create`, `hub pull-request`, or opening a compare URL.
 
 ### `git hub-remotes`
 
@@ -163,9 +161,9 @@ git tidy [branch]
 Deletes branches merged or squashed with a base branch.
 
 Arguments:
+
 - `branch`: defaults to "master"
 
-
-
 [help on configuring remotes]: https://help.github.com/articles/configuring-a-remote-for-a-fork/
+[gh tool]: https://cli.github.com/
 [hub tool]: https://hub.github.com/
