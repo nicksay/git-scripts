@@ -5,7 +5,11 @@
 set -e  # stop on error
 
 
-git checkout main
+SCRIPTS="$(dirname "$0")"
+
+main=$("$SCRIPTS"/git-hub-main)
+
+git checkout "$main"
 
 git sync
 

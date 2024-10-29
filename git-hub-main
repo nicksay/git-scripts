@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# Prints the (GitHub) main branch.
+
+
+set -e  # stop on error
+
+
+SCRIPTS="$(dirname "$0")"
+
+ref=$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null | cat)
+if [[ -n "$ref" && "$ref" != "origin/HEAD" ]]; then
+    main=$(basename $ref)
+elif git show-ref --quiet refs/heads/main 2>/dev/null; then
+    main=main
+elif git show-ref --quiet refs/heads/master 2>/dev/null; then
+    main=master
+else
+    echo "Error: could not determine main branch"
+    exit 1
+fi
+echo "$main"

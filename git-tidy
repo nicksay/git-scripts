@@ -6,8 +6,10 @@
 
 set -e  # stop on error
 
+SCRIPTS="$(dirname "$0")"
 
-base=${1-main}
+base=${1:-$("$SCRIPTS"/git-hub-main)}
+
 
 # Note that grep will exit with 1 if no lines match; use cat to avoid errors.
 merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)" | cat)

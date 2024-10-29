@@ -8,11 +8,12 @@ set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
+main=$("$SCRIPTS"/git-hub-main)
 
-remote_main_name=$(git config --get branch.main.remote || echo)
+remote_main_name=$(git config --get branch.${main}.remote || echo)
 remote_main_url=$(git remote get-url "$remote_main_name" 2>/dev/null || echo)
 if [[ ! "$remote_main_url" ]]; then
-  echo >&2 "Error: no remote found for the main branch"
+  echo >&2 "Error: no remote found for the $main branch"
   exit 1
 fi
 fork="$remote_main_name"
