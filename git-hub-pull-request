@@ -21,7 +21,7 @@ git push "$fork"
 sleep 1
 
 # If the `gh` command is available, use it to create and open the pull request.
-if which hub > /dev/null; then
+if which gh > /dev/null; then
   echo
   echo "Creating pull request..."
   echo "> gh pr create --fill --web"
