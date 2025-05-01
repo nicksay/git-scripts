@@ -8,7 +8,7 @@ set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
-main=$("$SCRIPTS"/git-hub-main)
+main=$("$SCRIPTS"/git-default-branch)
 
 remote_main_name=$(git config --get branch.${main}.remote || echo)
 remote_main_url=$(git remote get-url "$remote_main_name" 2>/dev/null || echo)

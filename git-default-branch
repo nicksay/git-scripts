@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Prints the (GitHub) main branch.
+# Prints the default branch (usually "main").
 
 
 set -e  # stop on error

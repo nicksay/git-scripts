@@ -11,7 +11,7 @@ SCRIPTS="$(dirname "$0")"
 upstream=$("$SCRIPTS"/git-hub-remotes --upstream | cut -f1)
 fork=$("$SCRIPTS"/git-hub-remotes --fork | cut -f1)
 current=$(git symbolic-ref --short HEAD)
-main=$("$SCRIPTS"/git-hub-main)
+main=$("$SCRIPTS"/git-default-branch)
 
 
 git prepare "$upstream"

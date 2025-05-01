@@ -7,7 +7,7 @@ set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
-main=$("$SCRIPTS"/git-hub-main)
+main=$("$SCRIPTS"/git-default-branch)
 
 git checkout "$main"
 
