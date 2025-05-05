@@ -1,86 +1,90 @@
-#!/usr/bin/env ruby
+#!/bin/bash
 #
 # Prints the GitHub user.
 # Finds the value from the following sources in descending order:
 # 1. environment ($GITHUB_USER)
 # 2. .git/config or ~/.gitconfig (git config --get hub.user)
-# 3. ~/.config/hub (github.com -> [0] -> user)
+# 3. ~/.config/gh/hosts.yml (github.com -> user)
+# 4. ~/.config/hub (github.com -> [0] -> user)
 # If a value is not found, one is saved to the local .gitconfig.
 
+DEBUG=0
+if [ "$1" = "--debug" ]; then
+  DEBUG=1
+fi
 
-require 'yaml'
-
-environment_value = ENV['GITHUB_USER'].to_s.chomp
-if not environment_value.empty?
-  if ARGV[0] == '--debug'
-    $stderr.puts "Using github.com username \"#{environment_value}\" from: $GITHUB_USER"
-  end
-  puts environment_value
+# Check environment variable
+if [ -n "$GITHUB_USER" ]; then
+  if [ $DEBUG -eq 1 ]; then
+    >&2 echo "Using github.com username \"$GITHUB_USER\" from: \$GITHUB_USER"
+  fi
+  echo "$GITHUB_USER"
   exit
-end
-if ARGV[0] == '--debug'
-  $stderr.puts "No github.com username found in: $GITHUB_USER"
-end
+elif [ $DEBUG -eq 1 ]; then
+  >&2 echo "No github.com username found in: \$GITHUB_USER"
+fi
 
-git_config_value = `git config --get hub.user`.to_s.chomp
-if not git_config_value.empty?
-  if ARGV[0] == '--debug'
-    $stderr.puts "Using github.com username \"#{git_config_value}\" from: git config --get hub.user"
-  end
-  puts git_config_value
+# Check git config
+GIT_CONFIG_VALUE=$(git config --get hub.user | tr -d '[:space:]')
+if [ -n "$GIT_CONFIG_VALUE" ]; then
+  if [ $DEBUG -eq 1 ]; then
+    >&2 echo "Using github.com username \"$GIT_CONFIG_VALUE\" from: git config --get hub.user"
+  fi
+  echo "$GIT_CONFIG_VALUE"
   exit
-end
-if ARGV[0] == '--debug'
-  $stderr.puts "No github.com username found in: git config --get hub.user"
-end
+elif [ $DEBUG -eq 1 ]; then
+  >&2 echo "No github.com username found in: git config --get hub.user"
+fi
 
-begin
-  gh_config = YAML.load_file(File.join(Dir.home, '.config', 'gh', 'hosts.yml'))
-  gh_config_value = gh_config['github.com']['user'].to_s.chomp
-  if not gh_config_value.empty?
-    if ARGV[0] == '--debug'
-      $stderr.puts "Using github.com username \"#{gh_config_value}\" from: ~/.config/gh/hosts.yml"
-    end
-    puts gh_config_value
+# Check ~/.config/gh/hosts.yml
+GH_CONFIG_FILE="$HOME/.config/gh/hosts.yml"
+if [ -f "$GH_CONFIG_FILE" ]; then
+  # Simple parsing for yaml file - look for user: entry under github.com:
+  GH_CONFIG_VALUE=$(grep -A5 "github.com" "$GH_CONFIG_FILE" | grep -m1 "user:" | cut -d':' -f2 | tr -d '[:space:]')
+  if [ -n "$GH_CONFIG_VALUE" ]; then
+    if [ $DEBUG -eq 1 ]; then
+      >&2 echo "Using github.com username \"$GH_CONFIG_VALUE\" from: ~/.config/gh/hosts.yml"
+    fi
+    echo "$GH_CONFIG_VALUE"
     exit
-  end
-rescue
-end
-if ARGV[0] == '--debug'
-  $stderr.puts "No github.com username found in: ~/.config/gh/hosts.yml"
-end
+  fi
+fi
+if [ $DEBUG -eq 1 ]; then
+  >&2 echo "No github.com username found in: ~/.config/gh/hosts.yml"
+fi
 
-begin
-  hub_config = YAML.load_file(File.join(Dir.home, '.config', 'hub'))
-  hub_config_value = hub_config['github.com'][0]['user'].to_s.chomp
-  if not hub_config_value.empty?
-    if ARGV[0] == '--debug'
-      $stderr.puts "Using github.com username \"#{hub_config_value}\" from: ~/.config/hub"
-    end
-    puts hub_config_value
+# Check ~/.config/hub
+HUB_CONFIG_FILE="$HOME/.config/hub"
+if [ -f "$HUB_CONFIG_FILE" ]; then
+  # Simple parsing for yaml file - look for user: entry under github.com:
+  HUB_CONFIG_VALUE=$(grep -A5 "github.com" "$HUB_CONFIG_FILE" | grep -m1 "user:" | cut -d':' -f2 | tr -d '[:space:]')
+  if [ -n "$HUB_CONFIG_VALUE" ]; then
+    if [ $DEBUG -eq 1 ]; then
+      >&2 echo "Using github.com username \"$HUB_CONFIG_VALUE\" from: ~/.config/hub"
+    fi
+    echo "$HUB_CONFIG_VALUE"
     exit
-  end
-rescue
-end
-if ARGV[0] == '--debug'
-  $stderr.puts "No github.com username found in: ~/.config/hub"
-end
+  fi
+fi
+if [ $DEBUG -eq 1 ]; then
+  >&2 echo "No github.com username found in: ~/.config/hub"
+fi
 
-
-$stderr.print "github.com username: "
-username = gets.chomp
-if username.empty?
-  $stderr.puts "Error: github.com username is required"
+# Prompt for username
+>&2 echo -n "github.com username: "
+read -r USERNAME
+if [ -z "$USERNAME" ]; then
+  >&2 echo "Error: github.com username is required"
   exit 1
-end
-$stderr.puts "Using github.com username: #{username}"
-puts username
+fi
+>&2 echo "Using github.com username: $USERNAME"
+echo "$USERNAME"
 
-$stderr.puts
-$stderr.puts "Saving github.com username locally for this repo..."
-$stderr.puts "> git config hub.user #{username}"
-`git config hub.user #{username}`
-$stderr.puts "Done."
-$stderr.puts "If you want to set the github.com username globally, run the following:"
-$stderr.puts "    git config --global hub.user #{username}"
-$stderr.puts
+>&2 echo
+>&2 echo "Saving github.com username locally for this repo..."
+>&2 echo "> git config hub.user $USERNAME"
+git config hub.user "$USERNAME"
+>&2 echo "Done."
+>&2 echo "If you want to set the github.com username globally, run the following:"
+>&2 echo "    git config --global hub.user $USERNAME"
+>&2 echo
