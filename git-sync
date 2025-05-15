@@ -10,8 +10,8 @@ set -e  # stop on error
 
 SCRIPTS="$(dirname "$0")"
 
-upstream=${1:-$("$SCRIPTS"/git-hub-remotes --upstream | cut -f1)}
-fork=${2:-$("$SCRIPTS"/git-hub-remotes --fork | cut -f1)}
+upstream=${1:-$("$SCRIPTS"/git-remotes --upstream | cut -f1)}
+fork=${2:-$("$SCRIPTS"/git-remotes --fork | cut -f1)}
 current=$(git symbolic-ref --short HEAD)
 branch=${3:-$current}
 
