@@ -61,6 +61,15 @@ squashed with main, including the one you created for your change.
 
 ## Documentation
 
+### `git remotes`
+
+Prints the upstream and fork remotes, finding GitHub `$GIHUB_USER` remotes
+if possible.
+
+```sh
+git remotes [--upstream|--fork]
+```
+
 ### `git hub-pull-request`
 
 Create a GitHub pull request.
@@ -68,13 +77,6 @@ Create a GitHub pull request.
 Calls `git prepare` and `git push` followed by one of the following:
 `gh pr create`, `hub pull-request`, or opening a compare URL.
 
-### `git hub-remotes`
-
-Prints the GitHub upstream and fork remotes.
-
-```sh
-git hub-remotes [--upstream|--fork]
-```
 
 ### `git hub-user`
 
@@ -123,7 +125,7 @@ Prepare your current branch for a pull request.
 
 Arguments:
 
-- `upstream`: defaults to `git hub-remotes --upstream`
+- `upstream`: defaults to `git remotes --upstream`
 - `branch`: defaults to "main"
 
 Fetches the latest commits from `[upstream]` and rebases on
@@ -144,8 +146,8 @@ Keep your local and fork repos synced with upstream.
 
 Arguments:
 
-- `upstream`: defaults to `git hub-remotes --upstream`
-- `fork`: defaults to `git hub-remotes --fork`
+- `upstream`: defaults to `git remotes --upstream`
+- `fork`: defaults to `git remotes --fork`
 - `branch`: defaults to the current branch
 
 Pulls the latest commits from `[upstream]/[branch]` and then pushes
