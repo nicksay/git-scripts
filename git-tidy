@@ -13,8 +13,7 @@ base=${1:-$("$SCRIPTS"/git-default-branch)}
 
 # Note that grep will exit with 1 if no lines match; use cat to avoid errors.
 merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)" | cat)
-num=$(echo "$merged" | wc -l)
-if (( $num > 0 )); then
+if [[ "$merged" ]]; then
   echo
   echo "Deleting branches that have been merged with $base..."
   echo "$merged" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
@@ -30,8 +29,7 @@ for branch in $unmerged; do
     squashed="$squashed $branch"
   fi
 done
-num=$(echo "$squashed" | wc -w)
-if (( $num > 0 )); then
+if [[ "$squashed" ]]; then
   echo
   echo "Deleting branches that have been squashed with $base..."
   echo "$squashed" | xargs -t git branch -D 2>&1 | sed 's/^git /> git /'
