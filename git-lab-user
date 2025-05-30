@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Prints the GitLab user.
+# Finds the value from the following sources in descending order:
+# 1. environment ($GITLAB_USER)
+# 2. git config --get lab.user
+# 3. glab config get user
+# If a value is not found, one is saved to the local .gitconfig.
+
+DEBUG=0
+if [ "$1" = "--debug" ]; then
+  DEBUG=1
+fi
+
+# Check environment variable
+if [ -n "$GITLAB_USER" ]; then
+  if [ $DEBUG -eq 1 ]; then
+    >&2 echo "Using gitlab username \"$GITLAB_USER\" from: \$GITLAB_USER"
+  fi
+  echo "$GITLAB_USER"
+  exit
+elif [ $DEBUG -eq 1 ]; then
+  >&2 echo "No gitlab username found in: \$GITLAB_USER"
+fi
+
+# Check git config
+GIT_CONFIG_VALUE=$(git config --get lab.user)
+if [ -n "$GIT_CONFIG_VALUE" ]; then
+  if [ $DEBUG -eq 1 ]; then
+    >&2 echo "Using gitlab username \"$GIT_CONFIG_VALUE\" from: git config --get lab.user"
+  fi
+  echo "$GIT_CONFIG_VALUE"
+  exit
+elif [ $DEBUG -eq 1 ]; then
+  >&2 echo "No gitlab username found in: git config --get lab.user"
+fi
+
+# Check glab config
+if which glab &> /dev/null; then
+  GLAB_CONFIG_VALUE=$(glab config get user)
+  if [ -n "$GLAB_CONFIG_VALUE" ]; then
+    if [ $DEBUG -eq 1 ]; then
+      >&2 echo "Using gitlab username \"$GLAB_CONFIG_VALUE\" from: glab config get user"
+    fi
+    echo "$GLAB_CONFIG_VALUE"
+    exit
+  fi
+fi
+if [ $DEBUG -eq 1 ]; then
+  >&2 echo "No gitlab username found in: glab config get user"
+fi
+
+# Prompt for username
+>&2 echo -n "gitlab username: "
+read -r USERNAME
+if [ -z "$USERNAME" ]; then
+  >&2 echo "Error: gitlab username is required"
+  exit 1
+fi
+>&2 echo "Using gitlab username: $USERNAME"
+echo "$USERNAME"
+
+>&2 echo
+>&2 echo "Saving gitlab username locally for this repo..."
+>&2 echo "> git config lab.user $USERNAME"
+git config lab.user "$USERNAME"
+>&2 echo "Done."
+>&2 echo "If you want to set the gitlab username globally, run the following:"
+>&2 echo "    git config --global lab.user $USERNAME"
+>&2 echo

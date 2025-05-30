@@ -2,16 +2,16 @@
 
 A collection of small scripts to make the git workflow easier
 
-These scripts are intended for making the GitHub workflow easier.
+These scripts are intended for making GitHub and GitLab workflows easier.
 They support a single "central" repo as well as the common dual
-"upstream/fork" repo setups. In particular, both the setup recommended
-by GitHub's [help on configuring remotes][] and used by GitHub's [gh tool][]
-(upstream named `upstream` and fork named `origin`) and the setup created by
-GitHub's [hub tool]() (upstream named `origin` and fork named `$GIHUB_USER`)
-are supported.
+"upstream/fork" repo setups. For forked repos, both of the following setups
+are supported:
 
-Note that nothing prevents using most of these scripts with other
-hosting services like GitLab.
+-   "standard", recommended by GitHub's [help on configuring remotes][]
+    and used by both GitHub's [gh tool][] and GitLab's [glab tool][]
+    (upstream named `upstream` and fork named `origin`)
+-   "alternate", used by GitHub's [hub tool]()
+    (upstream named `origin` and fork named `<user>`)
 
 ## Installation
 
@@ -95,6 +95,23 @@ Finds the value from the following sources in descending order:
 
 If a value is not found, prompts for one and saves it to .git/config.
 
+
+### `git lab-user`
+
+Prints the GitLab user.
+
+```sh
+git lab-user
+```
+
+Finds the value from the following sources in descending order:
+
+1. environment ($GITLAB_USER)
+2. git config --get lab.user
+3. glab config get user
+
+If a value is not found, prompts for one and saves it to .git/config.
+
 ### `git done`
 
 ```sh
@@ -168,4 +185,5 @@ Arguments:
 
 [help on configuring remotes]: https://help.github.com/articles/configuring-a-remote-for-a-fork/
 [gh tool]: https://cli.github.com/
+[glab tool]: https://docs.gitlab.com/editor_extensions/gitlab_cli/
 [hub tool]: https://hub.github.com/
