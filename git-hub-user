@@ -3,88 +3,145 @@
 # Prints the GitHub user.
 # Finds the value from the following sources in descending order:
 # 1. environment ($GITHUB_USER)
-# 2. .git/config or ~/.gitconfig (git config --get hub.user)
-# 3. ~/.config/gh/hosts.yml (github.com -> user)
-# 4. ~/.config/hub (github.com -> [0] -> user)
+# 2. git config --get hub.user
+# 3. gh config get user
+# 4. ~/.config/hub
 # If a value is not found, one is saved to the local .gitconfig.
 
 DEBUG=0
-if [ "$1" = "--debug" ]; then
-  DEBUG=1
-fi
+ARGS_HOST=
+
+# Parse arguments
+while (( $# > 0 )); do
+    if [[ "$1" == "-d" || "$1" == "--debug" ]]; then
+        DEBUG=1
+    elif [[ -n "$1" ]]; then
+        ARGS_HOST="$1"
+    fi
+    shift
+done
 
 # Check environment variable
 if [ -n "$GITHUB_USER" ]; then
-  if [ $DEBUG -eq 1 ]; then
-    >&2 echo "Using github.com username \"$GITHUB_USER\" from: \$GITHUB_USER"
-  fi
-  echo "$GITHUB_USER"
-  exit
-elif [ $DEBUG -eq 1 ]; then
-  >&2 echo "No github.com username found in: \$GITHUB_USER"
+    if (( $DEBUG )); then
+        >&2 echo "Using github user \"$GITHUB_USER\" from: \$GITHUB_USER"
+    fi
+    echo "$GITHUB_USER"
+    exit
+elif (( $DEBUG )); then
+    >&2 echo "No github user found in: \$GITHUB_USER"
 fi
 
 # Check git config
-GIT_CONFIG_VALUE=$(git config --get hub.user | tr -d '[:space:]')
-if [ -n "$GIT_CONFIG_VALUE" ]; then
-  if [ $DEBUG -eq 1 ]; then
-    >&2 echo "Using github.com username \"$GIT_CONFIG_VALUE\" from: git config --get hub.user"
-  fi
-  echo "$GIT_CONFIG_VALUE"
-  exit
-elif [ $DEBUG -eq 1 ]; then
-  >&2 echo "No github.com username found in: git config --get hub.user"
+git_config_value=$(git config --get hub.user)
+if [ -n "$git_config_value" ]; then
+    if (( $DEBUG )); then
+        >&2 echo "Using github user \"$git_config_value\" from: git config --get hub.user"
+    fi
+    echo "$git_config_value"
+    exit
+elif (( $DEBUG )); then
+    >&2 echo "No github user found in: git config --get hub.user"
 fi
 
-# Check ~/.config/gh/hosts.yml
-GH_CONFIG_FILE="$HOME/.config/gh/hosts.yml"
-if [ -f "$GH_CONFIG_FILE" ]; then
-  # Simple parsing for yaml file - look for user: entry under github.com:
-  GH_CONFIG_VALUE=$(grep -A5 "github.com" "$GH_CONFIG_FILE" | grep -m1 "user:" | cut -d':' -f2 | tr -d '[:space:]')
-  if [ -n "$GH_CONFIG_VALUE" ]; then
-    if [ $DEBUG -eq 1 ]; then
-      >&2 echo "Using github.com username \"$GH_CONFIG_VALUE\" from: ~/.config/gh/hosts.yml"
+# Check gh config
+if which gh &> /dev/null; then
+    # Get host from environment.
+    if [[ -n "$ARGS_HOST" ]]; then
+        gh_host="$ARGS_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    gh: using host \"$gh_host\" from command line argument"
+        fi
+    elif [[ -n "$GH_HOST" ]]; then
+        gh_host="$GH_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    gh: using host \"$gh_host\" from: \$GH_HOST"
+        fi
+    elif [[ -n "$GITHUB_HOST" ]]; then
+        gh_host="$GITHUB_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    gh: using host \"$gh_host\" from: \$GITHUB_HOST"
+        fi
+    else
+        gh_host="github.com"
+        if (( $DEBUG )); then
+            >&2 echo "    gh: using default host \"$gh_host\""
+        fi
     fi
-    echo "$GH_CONFIG_VALUE"
-    exit
-  fi
+    gh_config_value=$(gh config get user --host "$gh_host" 2> /dev/null)
+    if [ -n "$gh_config_value" ]; then
+        if (( $DEBUG )); then
+            >&2 echo "Using github user \"$gh_config_value\" from: gh config get user --host $gh_host"
+        fi
+        echo "$gh_config_value"
+        exit
+    fi
+else
+    >&2 echo "    gh: skipping, could not find \"gh\" command"
 fi
-if [ $DEBUG -eq 1 ]; then
-  >&2 echo "No github.com username found in: ~/.config/gh/hosts.yml"
+if (( $DEBUG )); then
+    >&2 echo "No github user found in: gh config get user"
 fi
 
 # Check ~/.config/hub
-HUB_CONFIG_FILE="$HOME/.config/hub"
-if [ -f "$HUB_CONFIG_FILE" ]; then
-  # Simple parsing for yaml file - look for user: entry under github.com:
-  HUB_CONFIG_VALUE=$(grep -A5 "github.com" "$HUB_CONFIG_FILE" | grep -m1 "user:" | cut -d':' -f2 | tr -d '[:space:]')
-  if [ -n "$HUB_CONFIG_VALUE" ]; then
-    if [ $DEBUG -eq 1 ]; then
-      >&2 echo "Using github.com username \"$HUB_CONFIG_VALUE\" from: ~/.config/hub"
+hub_config_file="$HOME/.config/hub"
+if [ -f "$hub_config_file" ]; then
+    # Get host from environment.
+    if [[ -n "$ARGS_HOST" ]]; then
+        hub_host="$ARGS_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    hub: using host \"$hub_host\" from command line argument"
+        fi
+    elif [[ -n "$HUB_HOST" ]]; then
+        hub_host="$HUB_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    hub: using host \"$hub_host\" from: \$HUB_HOST"
+        fi
+    elif [[ -n "$GITHUB_HOST" ]]; then
+        hub_host="$GITHUB_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    hub: using host \"$hub_host\" from: \$GITHUB_HOST"
+        fi
+    else
+        hub_host="github.com"
+        if (( $DEBUG )); then
+            >&2 echo "    hub: using default host \"$hub_host\""
+        fi
     fi
-    echo "$HUB_CONFIG_VALUE"
-    exit
-  fi
+    # Simple parsing for yaml file - look for "user:" entry
+    hub_config_value=$(grep -A5 "$hub_host" "$hub_config_file" \
+                            | grep -m1 "user:" \
+                            | cut -d':' -f2 \
+                            | tr -d '[:space:]')
+    if [ -n "$hub_config_value" ]; then
+        if (( $DEBUG )); then
+            >&2 echo "Using github user \"$hub_config_value\" for $hub_host from: ~/.config/hub"
+        fi
+        echo "$hub_config_value"
+        exit
+    fi
+else
+    >&2 echo "    hub: skipping, file not found: ~/.config/hub"
 fi
-if [ $DEBUG -eq 1 ]; then
-  >&2 echo "No github.com username found in: ~/.config/hub"
+if (( $DEBUG )); then
+    >&2 echo "No github user found in: ~/.config/hub"
 fi
 
-# Prompt for username
->&2 echo -n "github.com username: "
-read -r USERNAME
-if [ -z "$USERNAME" ]; then
-  >&2 echo "Error: github.com username is required"
-  exit 1
+# Prompt for user
+>&2 echo -n "github user: "
+read -r github_user
+if [ -z "$github_user" ]; then
+    >&2 echo "Error: github user is required"
+    exit 1
 fi
->&2 echo "Using github.com username: $USERNAME"
-echo "$USERNAME"
+>&2 echo "Using github user: $github_user"
+echo "$github_user"
 
 >&2 echo
->&2 echo "Saving github.com username locally for this repo..."
->&2 echo "> git config hub.user $USERNAME"
-git config hub.user "$USERNAME"
+>&2 echo "Saving github user locally for this repo..."
+>&2 echo "> git config hub.user $github_user"
+git config hub.user "$github_user"
 >&2 echo "Done."
->&2 echo "If you want to set the github.com username globally, run the following:"
->&2 echo "    git config --global hub.user $USERNAME"
+>&2 echo "If you want to set the github user globally, run the following:"
+>&2 echo "    git config --global hub.user $github_user"
 >&2 echo
