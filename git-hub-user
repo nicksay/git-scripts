@@ -9,12 +9,15 @@
 # If a value is not found, one is saved to the local .gitconfig.
 
 DEBUG=0
+PROMPT=1
 ARGS_HOST=
 
 # Parse arguments
 while (( $# > 0 )); do
     if [[ "$1" == "-d" || "$1" == "--debug" ]]; then
         DEBUG=1
+    elif [[ "$1" == "--no-input" ]]; then
+        PROMPT=0
     elif [[ -n "$1" ]]; then
         ARGS_HOST="$1"
     fi
@@ -77,7 +80,9 @@ if which gh &> /dev/null; then
         exit
     fi
 else
-    >&2 echo "    gh: skipping, could not find \"gh\" command"
+    if (( $DEBUG )); then
+        >&2 echo "    gh: skipping, could not find \"gh\" command"
+    fi
 fi
 if (( $DEBUG )); then
     >&2 echo "No github user found in: gh config get user"
@@ -121,27 +126,31 @@ if [ -f "$hub_config_file" ]; then
         exit
     fi
 else
-    >&2 echo "    hub: skipping, file not found: ~/.config/hub"
+    if (( $DEBUG )); then
+        >&2 echo "    hub: skipping, file not found: ~/.config/hub"
+    fi
 fi
 if (( $DEBUG )); then
     >&2 echo "No github user found in: ~/.config/hub"
 fi
 
-# Prompt for user
->&2 echo -n "github user: "
-read -r github_user
-if [ -z "$github_user" ]; then
-    >&2 echo "Error: github user is required"
-    exit 1
-fi
->&2 echo "Using github user: $github_user"
-echo "$github_user"
+if (( $PROMPT )); then
+    # Prompt for user
+    >&2 echo -n "github user: "
+    read -r github_user
+    if [ -z "$github_user" ]; then
+        >&2 echo "Error: github user is required"
+        exit 1
+    fi
+    >&2 echo "Using github user: $github_user"
+    echo "$github_user"
 
->&2 echo
->&2 echo "Saving github user locally for this repo..."
->&2 echo "> git config hub.user $github_user"
-git config hub.user "$github_user"
->&2 echo "Done."
->&2 echo "If you want to set the github user globally, run the following:"
->&2 echo "    git config --global hub.user $github_user"
->&2 echo
+    >&2 echo
+    >&2 echo "Saving github user locally for this repo..."
+    >&2 echo "> git config hub.user $github_user"
+    git config hub.user "$github_user"
+    >&2 echo "Done."
+    >&2 echo "If you want to set the github user globally, run the following:"
+    >&2 echo "    git config --global hub.user $github_user"
+    >&2 echo
+fi

@@ -8,88 +8,110 @@
 # If a value is not found, one is saved to the local .gitconfig.
 
 DEBUG=0
-HOST=
+PROMPT=1
+ARGS_HOST=
 
 # Parse arguments
 while (( $# > 0 )); do
     if [[ "$1" == "-d" || "$1" == "--debug" ]]; then
         DEBUG=1
+    elif [[ "$1" == "--no-input" ]]; then
+        PROMPT=0
     elif [[ -n "$1" ]]; then
-        HOST="$1"
+        ARGS_HOST="$1"
     fi
     shift
 done
 
-# Load values from environment or arguments.
-if [[ -n "$HOST" ]]; then
-    if (( $DEBUG )); then
-        >&2 echo "Using gitlab host \"$HOST\" from command line argument"
-    fi
-elif [[ -n "$GITLAB_HOST" ]]; then
-    HOST="$GITLAB_HOST"
-    if (( $DEBUG )); then
-        >&2 echo "Using gitlab host \"$HOST\" from: \$GITLAB_HOST"
-    fi
-else
-    HOST="gitlab.com"
-    if (( $DEBUG )); then
-        >&2 echo "Using gitlab host \"$HOST\""
-    fi
-fi
-
 # Check environment variable
 if [ -n "$GITLAB_USER" ]; then
   if (( $DEBUG )); then
-    >&2 echo "Using gitlab username \"$GITLAB_USER\" from: \$GITLAB_USER"
+      >&2 echo "Using gitlab user \"$GITLAB_USER\" from: \$GITLAB_USER"
   fi
   echo "$GITLAB_USER"
   exit
 elif (( $DEBUG )); then
-  >&2 echo "No gitlab username found in: \$GITLAB_USER"
+    >&2 echo "No gitlab user found in: \$GITLAB_USER"
 fi
 
 # Check git config
-GIT_CONFIG_VALUE=$(git config --get lab.user)
-if [ -n "$GIT_CONFIG_VALUE" ]; then
-  if (( $DEBUG )); then
-    >&2 echo "Using gitlab username \"$GIT_CONFIG_VALUE\" from: git config --get lab.user"
-  fi
-  echo "$GIT_CONFIG_VALUE"
-  exit
+git_config_value=$(git config --get lab.user)
+if [ -n "$git_config_value" ]; then
+    if (( $DEBUG )); then
+        >&2 echo "Using gitlab user \"$git_config_value\" from: git config --get lab.user"
+    fi
+    echo "$git_config_value"
+    exit
 elif (( $DEBUG )); then
-  >&2 echo "No gitlab username found in: git config --get lab.user"
+    >&2 echo "No gitlab user found in: git config --get lab.user"
 fi
 
 # Check glab config
 if which glab &> /dev/null; then
-  GLAB_CONFIG_VALUE=$(glab config get user --host "$HOST" 2> /dev/null)
-  if [ -n "$GLAB_CONFIG_VALUE" ]; then
-    if (( $DEBUG )); then
-      >&2 echo "Using gitlab username \"$GLAB_CONFIG_VALUE\" from: glab config get user --host $HOST"
+    # Get host from environment.
+    if [[ -n "$ARGS_HOST" ]]; then
+        glab_host="$ARGS_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    glab: using host \"$glab_host\" from command line argument"
+        fi
+    elif [[ -n "$GLAB_HOST" ]]; then
+        glab_host="$GLAB_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    glab: using host \"$glab_host\" from: \$GLAB_HOST"
+        fi
+    elif [[ -n "$GITLAB_HOST" ]]; then
+        glab_host="$GITLAB_HOST"
+        if (( $DEBUG )); then
+            >&2 echo "    glab: using host \"$glab_host\" from: \$GITLAB_HOST"
+        fi
+    else
+        glab_host="$(glab config get host)"
+        if [[ -n "$glab_host" ]]; then
+            if (( $DEBUG )); then
+                >&2 echo "    glab: using host \"$glab_host\" from: glab config get host"
+            fi
+        else
+            glab_host="gitlab.com"
+            if (( $DEBUG )); then
+                >&2 echo "    glab: using default host \"$glab_host\""
+            fi
+        fi
     fi
-    echo "$GLAB_CONFIG_VALUE"
-    exit
-  fi
+    glab_config_value=$(glab config get user --host "$glab_host" 2> /dev/null)
+    if [ -n "$glab_config_value" ]; then
+        if (( $DEBUG )); then
+            >&2 echo "Using gitlab user \"$glab_config_value\" from: glab config get user --host $glab_host"
+        fi
+        echo "$glab_config_value"
+        exit
+    fi
+else
+    if (( $DEBUG )); then
+        >&2 echo "    glab: skipping, could not find \"glab\" command"
+    fi
+fi
 fi
 if (( $DEBUG )); then
-  >&2 echo "No gitlab username found in: glab config get user"
+    >&2 echo "No gitlab user found in: glab config get user"
 fi
 
-# Prompt for username
->&2 echo -n "gitlab username: "
-read -r USERNAME
-if [ -z "$USERNAME" ]; then
-  >&2 echo "Error: gitlab username is required"
-  exit 1
-fi
->&2 echo "Using gitlab username: $USERNAME"
-echo "$USERNAME"
+if (( $PROMPT )); then
+    # Prompt for user
+    >&2 echo -n "gitlab user: "
+    read -r gitlab_user
+    if [ -z "$gitlab_user" ]; then
+        >&2 echo "Error: gitlab user is required"
+        exit 1
+    fi
+    >&2 echo "Using gitlab user: $gitlab_user"
+    echo "$gitlab_user"
 
->&2 echo
->&2 echo "Saving gitlab username locally for this repo..."
->&2 echo "> git config lab.user $USERNAME"
-git config lab.user "$USERNAME"
->&2 echo "Done."
->&2 echo "If you want to set the gitlab username globally, run the following:"
->&2 echo "    git config --global lab.user $USERNAME"
->&2 echo
+    >&2 echo
+    >&2 echo "Saving gitlab user locally for this repo..."
+    >&2 echo "> git config lab.user $gitlab_user"
+    git config lab.user "$gitlab_user"
+    >&2 echo "Done."
+    >&2 echo "If you want to set the gitlab user globally, run the following:"
+    >&2 echo "    git config --global lab.user $gitlab_user"
+    >&2 echo
+fi
