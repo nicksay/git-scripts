@@ -9,9 +9,23 @@
 # 4. for github, your github username (git-hub-user)
 
 DEBUG=0
-if [ "$1" = "--debug" ]; then
-  DEBUG=1
-fi
+QUIET=0
+FORK_ONLY=0
+UPSTREAM_ONLY=0
+
+# Parse arguments
+while (( $# > 0 )); do
+    if [[ "$1" == "-d" || "$1" == "--debug" ]]; then
+        DEBUG=1
+    elif [[ "$1" == "-q" || "$1" == "--quiet" ]]; then
+        QUIET=1
+    elif [[ "$1" == "--fork" ]]; then
+        FORK_ONLY=1
+    elif [[ "$1" == "--upstream" ]]; then
+        UPSTREAM_ONLY=1
+    fi
+    shift
+done
 
 
 set -e  # stop on error
@@ -20,25 +34,30 @@ set -e  # stop on error
 SCRIPTS="$(dirname "$0")"
 
 main=$("$SCRIPTS"/git-default-branch)
-
-remote_main_name=$(git config --get branch.${main}.remote || echo)
-remote_main_url=$(git remote get-url "$remote_main_name" 2>/dev/null || echo)
 if (( $DEBUG )); then
-    >&2 echo "Got config for main remote:"
-    >&2 printf "    $remote_main_name\t$remote_main_url\n"
+    >&2 echo "Using branch \"$main\" from: git default-branch"
+fi
+
+remote_main=$(git config --get branch.${main}.remote || echo)
+if (( $DEBUG )); then
+    >&2 echo "Remote for branch \"$main\": $remote_main"
+fi
+remote_main_url=$(git remote get-url "$remote_main" 2>/dev/null || echo)
+if (( $DEBUG )); then
+    >&2 echo "URL for branch \"$main\": $remote_main_url"
 fi
 if [[ ! "$remote_main_url" ]]; then
     >&2 echo "Error: no remote found for the $main branch"
-        >&2 echo
-        >&2 echo "To set one, run the following (choose origin or upstream):"
-            >&2 echo "    git branch --set-upstream-to=(origin | upstream) $main"
+    >&2 echo
+    >&2 echo "To set one, run the following (choose origin or upstream):"
+    >&2 echo "    git branch --set-upstream-to=(origin | upstream) $main"
     exit 1
 fi
 
 # Default to using the remote for main.
-fork="$remote_main_name"
+fork="$remote_main"
 fork_url="$remote_main_url"
-upstream="$remote_main_name"
+upstream="$remote_main"
 upstream_url="$remote_main_url"
 if (( $DEBUG )); then
     >&2 echo "Default:"
@@ -47,19 +66,17 @@ if (( $DEBUG )); then
 fi
 
 # Check for origin/upstream fork configuration.
-if [[ "$remote_main_name" == "origin" ]]; then
+if [[ "$remote_main" == "origin" ]]; then
     remote_origin_url=$remote_main_url
 else
     remote_origin_url=$(git remote get-url "origin" 2>/dev/null || echo)
 fi
 if (( $DEBUG )); then
-    >&2 echo "Got config for origin:"
-    >&2 printf "    $remote_origin_url\n"
+    >&2 echo "URL for remote origin: $remote_origin_url"
 fi
 remote_upstream_url=$(git remote get-url "upstream" 2>/dev/null || echo)
 if (( $DEBUG )); then
-    >&2 echo "Got config for upstream:"
-    >&2 printf "    $remote_upstream_url\n"
+    >&2 echo "URL for remote upstream: $remote_upstream_url"
 fi
 if [[ "$remote_origin_url" && "$remote_upstream_url" ]]; then
     fork="origin"
@@ -71,36 +88,75 @@ if [[ "$remote_origin_url" && "$remote_upstream_url" ]]; then
         >&2 printf "    fork:       $fork\t$fork_url\n"
         >&2 printf "    upstream:   $upstream\t$upstream_url\n"
     fi
-elif [[ "$remote_origin_url" =~ [./]github[./] ]] ||
-     [[ "$remote_upstream_url" =~ [./]github[./] ]]; then
-    hub_user=$("$SCRIPTS"/git-hub-user)
-    if [[ ! "$hub_user" ]]; then
-        >&2 echo "Error: github.com username is required"
-        exit 1
+else
+    # Check for origin/<user> and upstream/<user> fork configuration.
+    if [[ "$remote_origin_url" =~ [./@]github[./] ]] ||
+       [[ "$remote_upstream_url" =~ [./@]github[./] ]]; then
+        if (( $DEBUG )); then
+            >&2 echo Found github URL
+        fi
+        hub_user=$("$SCRIPTS"/git-hub-user --no-input)
+        if ! [[ "$hub_user" ]]; then
+            if ! (( $QUIET )); then
+                >&2 echo "Warning: no github user found, but a github remote is being used"
+                >&2 echo
+                >&2 echo "To set a github user, run the following:"
+                >&2 echo "    git hub-user"
+            fi
+        else
+            remote_user=$hub_user
+            if (( $DEBUG )); then
+                >&2 echo "Using remote user \"$remote_user\" from: git hub-user"
+            fi
+        fi
+    elif [[ "$remote_origin_url" =~ [./@]gitlab[./] ]] ||
+         [[ "$remote_upstream_url" =~ [./@]gitlab[./] ]]; then
+        if (( $DEBUG )); then
+            >&2 echo Found gitlab URL
+        fi
+        lab_user=$("$SCRIPTS"/git-lab-user)
+        if ! [[ "$lab_user" ]]; then
+            if ! (( $QUIET )); then
+                >&2 echo "Warning: no gitlab user found, but a gitlab remote is being used"
+                >&2 echo
+                >&2 echo "To set a gitlab user, run the following:"
+                >&2 echo "    git lab-user"
+            fi
+        else
+            remote_user=$lab_user
+            if (( $DEBUG )); then
+                >&2 echo "Using remote user \"$remote_user\" from: git lab-user"
+            fi
+        fi
     fi
-    remote_username_url=$(git remote get-url "$hub_user" 2>/dev/null || echo)
+    if [[ -z "$remote_user" ]]; then
+        remote_user=$USER
+        if (( $DEBUG )); then
+            >&2 echo "Using remote user \"$remote_user\" from: \$USER"
+        fi
+    fi
+    remote_user_url=$(git remote get-url "$remote_user" 2>/dev/null || echo)
     if (( $DEBUG )); then
-        >&2 echo "Got config for $hub_user:"
-        >&2 printf "    $remote_username_url\n"
+        >&2 echo "URL for remote $remote_user: $remote_user_url"
     fi
-    if [[ "$remote_username_url" ]]; then
+    if [[ "$remote_user_url" ]]; then
         if [[ "$remote_origin_url" ]]; then
-            fork="$hub_user"
-            fork_url="$remote_username_url"
+            fork="$remote_user"
+            fork_url="$remote_user_url"
             upstream="origin"
             upstream_url="$remote_origin_url"
             if (( $DEBUG )); then
-                >&2 echo "Using $hub_user and origin:"
+                >&2 echo "Using $remote_user and origin:"
                 >&2 printf "    fork:       $fork\t$fork_url\n"
                 >&2 printf "    upstream:   $upstream\t$upstream_url\n"
             fi
         elif [[ "$remote_upstream_url" ]]; then
-            fork="$hub_user"
-            fork_url="$remote_username_url"
+            fork="$remote_user"
+            fork_url="$remote_user_url"
             upstream="upstream"
             upstream_url="$remote_upstream_url"
             if (( $DEBUG )); then
-                >&2 echo "Using $hub_user and upstream:"
+                >&2 echo "Using $remote_user and upstream:"
                 >&2 printf "    fork:       $fork\t$fork_url\n"
                 >&2 printf "    upstream:   $upstream\t$upstream_url\n"
             fi
@@ -108,9 +164,13 @@ elif [[ "$remote_origin_url" =~ [./]github[./] ]] ||
     fi
 fi
 
-if [[ "$1" == "--fork" ]]; then
+if (( $DEBUG )); then
+    >&2 echo
+fi
+
+if (( $FORK_ONLY )); then
   printf "$fork\t$fork_url\n"
-elif [[ "$1" == "--upstream" ]]; then
+elif (( $UPSTREAM_ONLY )); then
   printf "$upstream\t$upstream_url\n"
 else
   printf "fork:       $fork\t$fork_url\n"
