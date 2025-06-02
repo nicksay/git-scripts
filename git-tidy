@@ -12,25 +12,40 @@ base=${1:-$("$SCRIPTS"/git-default-branch)}
 
 
 # Note that grep will exit with 1 if no lines match; use cat to avoid errors.
-merged=$(git branch --merged "$base" | egrep -v "(^\* | $base\$)" | cat)
+merged=$(git branch --merged $base | egrep -v "(^\* | $base\$)" | cat)
 if [[ "$merged" ]]; then
-  echo
-  echo "Deleting branches that have been merged with $base..."
-  echo "$merged" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
+    echo
+    echo "Deleting branches that have been merged with $base..."
+    echo "$merged" | xargs -t git branch -d 2>&1 | sed 's/^git /> git /'
 fi
 
 squashed=""
 # Note that grep will exit with 1 if no lines match; use cat to avoid errors.
-unmerged=$(git branch --no-merged "$base" | egrep -v "(^\* | $base\$)" | cat)
+unmerged=$(git branch --no-merged $base | egrep -v "(^\* | $base\$)" | cat)
 for branch in $unmerged; do
-  branch_changes=$(git log --format=%H "$base..$branch")
-  squashed_changes=$(git log --format=%H --cherry "$base...$branch")
-  if [[ "$branch_changes" == "$squashed_changes" ]]; then
-    squashed="$squashed $branch"
-  fi
+    # If a remote branch with multiple commits was squashed before merge,
+    # the commit hash will have changed and can't be compared with something
+    # like `git cherrry $base $branch`.  Instead, use `git patch-id` to see
+    # if any of the diffs match.
+    merge_base=$(git merge-base $base $branch)
+    patch_id=$(git diff $merge_base $branch \
+                    | git patch-id --stable \
+                    | cut -d' ' -f1)
+    revs=$(git rev-list $branch..$base)
+    for rev in $revs; do
+        base_patch_id=$(git diff $rev~ $rev \
+                            | git patch-id --stable \
+                            | cut -d' ' -f1)
+        if [[ "$patch_id" = "$base_patch_id" ]]; then
+            squashed="$squashed $branch"
+            break
+        fi
+    done
 done
 if [[ "$squashed" ]]; then
-  echo
-  echo "Deleting branches that have been squashed with $base..."
-  echo "$squashed" | xargs -t git branch -D 2>&1 | sed 's/^git /> git /'
+    echo
+    echo "Deleting branches that have been squashed with $base..."
+    echo "$squashed" | xargs -t git branch -D 2>&1 | sed 's/^git /> git /'
 fi
+echo
+echo "Done."
